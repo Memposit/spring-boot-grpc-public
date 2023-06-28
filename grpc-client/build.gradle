@@ -1,0 +1,55 @@
+plugins {
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+    id 'com.diffplug.spotless'
+    id 'io.freefair.lombok'
+}
+
+dependencies {
+    implementation project(':grpc-common')
+
+    implementation "net.devh:grpc-client-spring-boot-starter:${springBootGrpcVersion}"
+
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'io.projectreactor:reactor-test'
+}
+
+bootJar {
+    manifest {
+        attributes(
+                'Created-By': "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})".toString(),
+                'Built-By': "${System.properties['user.name']}@${host}".toString(),
+                'Build-Date': buildDate,
+                'Build-Time': buildTime,
+                'Built-OS': "${System.properties['os.name']}",
+                'Build-Revision': buildRevision,
+                'Build-Branch': buildBranch,
+                'Specification-Title': project.name,
+                'Specification-Version': projectVersion,
+                'Specification-Vendor': projectVendor,
+                'Implementation-Title': project.name,
+                'Implementation-Version': projectVersion,
+                'Implementation-Vendor': projectVendor
+        )
+    }
+}
+
+spotless {
+    java {
+        target('src/main/**/*.java', 'src/test/**/*.java')
+        removeUnusedImports()
+    }
+    format('misc') {
+        target('**/*.gradle', '**/*.md', '**/*.yml')
+        targetExclude('**/build/**/*.*')
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

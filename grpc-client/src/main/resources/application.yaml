@@ -1,0 +1,24 @@
+server:
+  port: 8082
+spring:
+  application:
+    name: grpc-client
+management:
+  server:
+    port: 8083
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+logging:
+  level:
+    root: info
+    com.memposit: debug
+
+grpc:
+  client:
+    healthCheck:
+      address: 'static://127.0.0.1:9000'
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+      negotiationType: plaintext

@@ -1,0 +1,134 @@
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
+
+buildscript {
+    repositories {
+        maven {
+            url 'https://plugins.gradle.org/m2/'
+        }
+    }
+    ext {
+        projectVersion = '0.0.1-SNAPSHOT'
+        projectVendor = 'Memposit LLC'
+
+        // https://github.com/grpc/grpc-java/releases
+        grpcVersion = '1.51.0'
+
+        // https://github.com/protocolbuffers/protobuf/releases
+        protobufVersion = '3.21.12'
+
+        // https://github.com/yidongnan/grpc-spring-boot-starter/releases
+        springBootGrpcVersion = '2.14.0.RELEASE'
+
+        // https://github.com/spring-projects/spring-boot/releases
+        springBootVersion = '2.7.7'
+
+        // https://github.com/junit-team/junit5/releases
+        junitVersion = '5.9.2'
+
+        // https://github.com/google/protobuf-gradle-plugin/releases
+        protobufGradlePluginVersion = '0.9.2'
+
+        // https://github.com/spring-gradle-plugins/dependency-management-plugin/releases
+        springDependencyManagementPluginVersion = '1.1.0'
+
+        // https://github.com/freefair/gradle-plugins/releases
+        lombokPluginVersion = '6.6.1'
+
+        // https://github.com/nemerosa/versioning/releases
+        versioningPluginVersion = '3.0.0'
+
+        // https://github.com/diffplug/spotless/releases
+        spotlessPluginVersion = '6.13.0'
+    }
+}
+
+plugins {
+    id 'java'
+    id 'java-library'
+    id 'org.springframework.boot' version "${springBootVersion}" apply false
+    id 'io.spring.dependency-management' version "${springDependencyManagementPluginVersion}"
+    id 'net.nemerosa.versioning' version "${versioningPluginVersion}"
+    id 'com.google.protobuf' version "${protobufGradlePluginVersion}" apply false
+    id 'io.freefair.lombok' version "${lombokPluginVersion}" apply false
+    id 'com.diffplug.spotless' version "${spotlessPluginVersion}" apply false
+}
+
+wrapper {
+    gradleVersion = '7.6'
+}
+
+def buildTimeAndDate = OffsetDateTime.now()
+ext {
+    buildDate = DateTimeFormatter.ISO_LOCAL_DATE.format(buildTimeAndDate)
+    buildTime = DateTimeFormatter.ofPattern('HH:mm:ss.SSSZ').format(buildTimeAndDate)
+    buildRevision = versioning.info.commit
+    buildBranch = versioning.info.branch
+    host = InetAddress.getLocalHost().getHostName()
+}
+
+allprojects {
+    apply plugin: 'java'
+
+    jar {
+        onlyIf { !sourceSets.main.allSource.files.isEmpty() }
+    }
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
+    }
+
+    compileJava {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+        options.encoding = 'UTF-8'
+    }
+
+    compileJava.options*.compilerArgs = ['-Xlint:all', '-Xlint:-processing', '-parameters']
+
+    repositories {
+        mavenCentral()
+    }
+
+    jar {
+        manifest {
+            attributes(
+                    'Created-By': "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})".toString(),
+                    'Built-By': "${System.properties['user.name']}@${host}".toString(),
+                    'Build-Date': buildDate,
+                    'Build-Time': buildTime,
+                    'Built-OS': "${System.properties['os.name']}",
+                    'Build-Revision': buildRevision,
+                    'Build-Branch': buildBranch,
+                    'Specification-Title': project.name,
+                    'Specification-Version': projectVersion,
+                    'Specification-Vendor': projectVendor,
+                    'Implementation-Title': project.name,
+                    'Implementation-Version': projectVersion,
+                    'Implementation-Vendor': projectVendor
+            )
+        }
+    }
+
+    buildscript {
+        repositories {
+            maven {
+                url 'https://plugins.gradle.org/m2/'
+            }
+        }
+
+        dependencyManagement {
+            imports {
+                mavenBom "org.springframework.boot:spring-boot-starter-parent:${springBootVersion}"
+                mavenBom "com.google.protobuf:protobuf-bom:${protobufVersion}"
+                mavenBom "io.grpc:grpc-bom:${grpcVersion}"
+                mavenBom "org.junit:junit-bom:${junitVersion}"
+            }
+        }
+    }
+}
+
+group = 'com.memposit.grpc'
+version = projectVersion
